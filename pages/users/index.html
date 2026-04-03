@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCal — Users</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e11;
+    --surface: #17171c;
+    --surface2: #1f1f27;
+    --border: #2c2c38;
+    --accent: #c8f04a;
+    --accent2: #7b5ef8;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --danger: #f04a4a;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 999;
+  }
+
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .nav-logo span { color: var(--text); }
+  .nav-links { display: flex; gap: 8px; }
+  .nav-link {
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase;
+    text-decoration: none; color: var(--muted);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav-link:hover, .nav-link.active {
+    color: var(--text); border-color: var(--border);
+    background: var(--surface2);
+  }
+  .device-badge {
+    font-size: 0.7rem; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .device-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+  .page {
+    max-width: 900px; margin: 0 auto; padding: 40px 24px;
+  }
+
+  .page-header {
+    margin-bottom: 40px;
+  }
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem; font-weight: 700; margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+  .page-sub { font-size: 0.8rem; color: var(--muted); line-height: 1.7; }
+
+  /* Summary stats */
+  .summary {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    margin-bottom: 40px;
+  }
+  .sum-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px;
+  }
+  .sum-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem; font-weight: 700; color: var(--accent);
+    line-height: 1;
+  }
+  .sum-label {
+    font-size: 0.65rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px;
+  }
+
+  /* My Device Highlight */
+  .my-device-card {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius); padding: 24px;
+    margin-bottom: 32px;
+    position: relative; overflow: hidden;
+  }
+  .my-device-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .my-device-label {
+    font-size: 0.65rem; color: var(--accent);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+  }
+  .my-device-id {
+    font-size: 1rem; font-weight: 500; margin-bottom: 12px;
+    word-break: break-all;
+  }
+  .my-device-stats {
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+  .my-stat { font-size: 0.78rem; color: var(--muted); }
+  .my-stat strong { color: var(--text); }
+
+  /* Users list */
+  .section-label {
+    font-size: 0.68rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .user-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px;
+    margin-bottom: 12px;
+    display: grid; grid-template-columns: 48px 1fr auto;
+    gap: 16px; align-items: center;
+    transition: border-color 0.15s;
+  }
+  .user-card:hover { border-color: var(--surface2); background: var(--surface2); }
+
+  .user-avatar {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .user-info { min-width: 0; }
+  .user-id {
+    font-size: 0.82rem; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+  .user-meta { font-size: 0.68rem; color: var(--muted); }
+
+  .user-count-badge {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px; text-align: center;
+    flex-shrink: 0;
+  }
+  .badge-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; font-weight: 700; color: var(--accent2);
+    display: block;
+  }
+  .badge-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
+
+  /* User events expandable */
+  .user-events-toggle {
+    grid-column: 1 / -1;
+    display: none;
+  }
+  .user-events-toggle.open { display: block; }
+  .user-event-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+  }
+  .ev-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .ev-date-label { color: var(--muted); font-size: 0.7rem; min-width: 90px; }
+  .ev-title-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev-time-badge {
+    background: var(--surface2); border-radius: 5px;
+    padding: 2px 6px; font-size: 0.65rem; color: var(--muted);
+  }
+  .expand-btn {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; padding: 0;
+    display: flex; align-items: center; gap: 4px;
+    margin-top: 8px; transition: color 0.15s;
+  }
+  .expand-btn:hover { color: var(--text); }
+
+  .empty-state {
+    text-align: center; color: var(--muted);
+    padding: 60px 0; font-size: 0.82rem; line-height: 2;
+  }
+  .empty-icon { font-size: 2.5rem; display: block; margin-bottom: 12px; }
+
+  @media (max-width: 600px) {
+    .summary { grid-template-columns: 1fr 1fr; }
+    .user-card { grid-template-columns: 40px 1fr auto; gap: 12px; }
+    nav { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Open<span>Cal</span></div>
+  <div class="nav-links">
+    <a href="../calendar/index.html" class="nav-link">Calendar</a>
+    <a href="index.html" class="nav-link active">Users</a>
+  </div>
+  <div class="device-badge">
+    <div class="device-dot"></div>
+    <span id="deviceLabel">Your Device</span>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div class="page-title">Device Users</div>
+    <div class="page-sub">
+      Everyone who has contributed events to this calendar.<br>
+      Events are owned by the device that created them — only that device can edit or delete.
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="sum-card">
+      <div class="sum-num" id="sumDevices">0</div>
+      <div class="sum-label">Unique Devices</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-num" id="sumEvents">0</div>
+      <div class="sum-label">Total Events</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-num" id="sumMine">0</div>
+      <div class="sum-label">Your Events</div>
+    </div>
+  </div>
+
+  <div class="my-device-card" id="myDeviceCard">
+    <div class="my-device-label"><span>✦</span> Your Device</div>
+    <div class="my-device-id" id="myDeviceId">—</div>
+    <div class="my-device-stats" id="myDeviceStats"></div>
+  </div>
+
+  <div class="section-label">All Participants</div>
+  <div id="usersList">
+    <div class="empty-state">
+      <span class="empty-icon">🌐</span>
+      No events yet — be the first to add one on the Calendar page.
+    </div>
+  </div>
+</div>
+
+<script>
+const DB_NAME = 'OpenCalDB';
+const DB_VER = 1;
+const STORE = 'events';
+
+function getDeviceId() {
+  let id = localStorage.getItem('opencal_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem('opencal_device_id', id);
+  }
+  return id;
+}
+const DEVICE_ID = getDeviceId();
+document.getElementById('deviceLabel').textContent = DEVICE_ID.slice(0, 12) + '…';
+document.getElementById('myDeviceId').textContent = DEVICE_ID;
+
+let db;
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE)) {
+        const s = d.createObjectStore(STORE, { keyPath: 'id' });
+        s.createIndex('dateIdx', 'date', { unique: false });
+        s.createIndex('deviceIdx', 'deviceId', { unique: false });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function dbGetAll() {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    tx.objectStore(STORE).getAll().onsuccess = e => res(e.target.result);
+  });
+}
+
+// Avatar colors cycle
+const AVATAR_COMBOS = [
+  { bg: 'rgba(123,94,248,0.2)', color: '#7b5ef8' },
+  { bg: 'rgba(200,240,74,0.15)', color: '#c8f04a' },
+  { bg: 'rgba(240,74,74,0.15)', color: '#f04a4a' },
+  { bg: 'rgba(74,240,200,0.15)', color: '#4af0c8' },
+  { bg: 'rgba(240,168,74,0.15)', color: '#f0a84a' },
+  { bg: 'rgba(240,74,158,0.15)', color: '#f04a9e' },
+];
+
+function avatarLetter(deviceId) {
+  return deviceId.replace('dev_','').slice(0,1).toUpperCase();
+}
+function avatarCombo(idx) { return AVATAR_COMBOS[idx % AVATAR_COMBOS.length]; }
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US',
+    { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function render() {
+  const all = await dbGetAll();
+
+  // group by device
+  const byDevice = {};
+  for (const ev of all) {
+    byDevice[ev.deviceId] = byDevice[ev.deviceId] || [];
+    byDevice[ev.deviceId].push(ev);
+  }
+
+  const devices = Object.keys(byDevice);
+  const myEvs = byDevice[DEVICE_ID] || [];
+
+  // Summary
+  document.getElementById('sumDevices').textContent = devices.length;
+  document.getElementById('sumEvents').textContent = all.length;
+  document.getElementById('sumMine').textContent = myEvs.length;
+
+  // My device stats
+  const dates = [...new Set(myEvs.map(e => e.date))].length;
+  document.getElementById('myDeviceStats').innerHTML = `
+    <div class="my-stat"><strong>${myEvs.length}</strong> events created</div>
+    <div class="my-stat"><strong>${dates}</strong> unique dates</div>
+    <div class="my-stat">First: <strong>${myEvs.length ? fmtDate(myEvs.sort((a,b)=>a.date.localeCompare(b.date))[0].date) : '—'}</strong></div>
+  `;
+
+  if (!devices.length) return;
+
+  // Sort: mine first, then by event count
+  const sorted = devices.sort((a, b) => {
+    if (a === DEVICE_ID) return -1;
+    if (b === DEVICE_ID) return 1;
+    return byDevice[b].length - byDevice[a].length;
+  });
+
+  const list = document.getElementById('usersList');
+  list.innerHTML = '';
+
+  sorted.forEach((devId, idx) => {
+    const evs = byDevice[devId].sort((a, b) => a.date.localeCompare(b.date));
+    const mine = devId === DEVICE_ID;
+    const combo = avatarCombo(idx);
+    const card = document.createElement('div');
+    card.className = 'user-card';
+
+    const avatar = `<div class="user-avatar" style="background:${combo.bg};color:${combo.color};">${avatarLetter(devId)}</div>`;
+    const info = `
+      <div class="user-info">
+        <div class="user-id" title="${escHtml(devId)}">${escHtml(devId)} ${mine ? '<span style="color:var(--accent);font-size:0.65rem;">← You</span>' : ''}</div>
+        <div class="user-meta">
+          ${evs.length} event${evs.length !== 1 ? 's' : ''} &nbsp;·&nbsp;
+          Active: ${fmtDate(evs[evs.length-1]?.date)}
+        </div>
+        <button class="expand-btn" onclick="toggleEvents(this)">▸ Show events</button>
+      </div>
+    `;
+    const badge = `
+      <div class="user-count-badge">
+        <span class="badge-num">${evs.length}</span>
+        <span class="badge-label">Events</span>
+      </div>
+    `;
+    const evRows = evs.map(ev => `
+      <div class="user-event-row">
+        <div class="ev-dot" style="background:${ev.color || '#7b5ef8'};"></div>
+        <div class="ev-date-label">${fmtDate(ev.date)}</div>
+        <div class="ev-title-text">${escHtml(ev.title)}</div>
+        ${ev.time ? `<div class="ev-time-badge">${ev.time}</div>` : ''}
+      </div>
+    `).join('');
+
+    const expandable = `
+      <div class="user-events-toggle">
+        ${evRows}
+      </div>
+    `;
+
+    card.innerHTML = avatar + info + badge + expandable;
+    if (mine) card.style.borderColor = 'var(--accent2)';
+    list.appendChild(card);
+  });
+}
+
+function toggleEvents(btn) {
+  const card = btn.closest('.user-card');
+  const panel = card.querySelector('.user-events-toggle');
+  const open = panel.classList.toggle('open');
+  btn.textContent = open ? '▾ Hide events' : '▸ Show events';
+}
+
+async function init() {
+  await initDB();
+  await render();
+}
+init().catch(console.error);
+</script>
+</body>
+</html>
