@@ -1,17 +1,36 @@
 # OpenCalendar Deployment Guide (Cloudflare)
 
-This folder contains the deployment setup for OpenCalendar.
+## Cloudflare Pages vs Wrangler Static Assets Setup
+
+**Cloudflare Pages** is Cloudflare’s official platform for hosting static websites, single-page applications (SPAs), and Jamstack projects. It was built to provide a seamless developer experience with the following key benefits:
+
+- **Git integration**: Automatic deployments on every push to GitHub, GitLab, or Bitbucket.
+- **Preview deployments**: Unique preview URLs for every branch and pull request.
+- **Dashboard UI**: Easy configuration of build commands, environment variables, and custom domains directly from the Cloudflare dashboard.
+- **Global CDN + Edge Functions**: Fast performance with automatic caching and the ability to add dynamic behavior via Cloudflare Functions.
+- **Analytics, Forms, and more**: Built-in observability, form handling, and additional features without extra configuration.
+
+Pages is ideal when your project grows, involves a team, or when you want automated CI/CD workflows tied to your repository.
+
+This repository, however, uses **Wrangler with static assets** (Cloudflare Workers static asset mode) instead of the Cloudflare Pages dashboard build pipeline. This setup was chosen for:
+- Direct CLI-based deployment control (`wrangler deploy`)
+- Simpler configuration for purely static sites without needing a build step
+- Immediate control over the Workers runtime and compatibility flags
+- Deployment to a custom `workers.dev` subdomain
+
+**When to use which:**
+- Use **Cloudflare Pages** for Git-connected auto-deploys and preview environments.
+- Use the current **Wrangler + assets** setup for lightweight, CLI-driven deployments and fine-grained Workers control.
+
+You can migrate to Cloudflare Pages later if your needs change (see Section 10 for comparison).
 
 ## Important Context
-
 This project is currently deployed using Wrangler with static assets (Cloudflare Workers static asset mode), not the Cloudflare Pages dashboard build pipeline.
 
 That means:
-
 1. Files are served from the `calendar` folder.
 2. Deployment is done with `wrangler deploy`.
 3. The app is available on a `workers.dev` URL.
-
 ## 1) Prerequisites
 
 Install and configure these first:
