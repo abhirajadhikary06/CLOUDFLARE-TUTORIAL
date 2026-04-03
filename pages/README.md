@@ -1,20 +1,27 @@
 # OpenCalendar Deployment Guide (Cloudflare)
 
-This folder contains the Cloudflare deployment setup for OpenCalendar.
+This folder contains the deployment setup for OpenCalendar.
 
-Important note:
-The current project is deployed using Wrangler with static assets from the `calendar` folder, which serves your site on a `*.workers.dev` URL.
+## Important Context
 
-## 1) Requirements
+This project is currently deployed using Wrangler with static assets (Cloudflare Workers static asset mode), not the Cloudflare Pages dashboard build pipeline.
 
-You need these before deployment:
+That means:
 
-1. Cloudflare account
-2. Node.js (LTS recommended, 18+)
-3. npm (comes with Node.js)
-4. Wrangler CLI (installed globally or used with `npx`)
+1. Files are served from the `calendar` folder.
+2. Deployment is done with `wrangler deploy`.
+3. The app is available on a `workers.dev` URL.
 
-Check versions:
+## 1) Prerequisites
+
+Install and configure these first:
+
+1. Cloudflare account (required for deployment)
+2. Node.js 18+ (runtime for Wrangler CLI)
+3. npm (package manager, bundled with Node.js)
+4. Wrangler CLI (deployment tool)
+
+Check your environment:
 
 ```bash
 node -v
@@ -22,9 +29,9 @@ npm -v
 npx wrangler -v
 ```
 
-## 2) Project Structure (What each part does)
+## 2) Project Components
 
-Current structure in this folder:
+Current structure:
 
 ```text
 pages/
@@ -35,23 +42,27 @@ pages/
   README.md
 ```
 
-What each component means:
+What each component does and why it is needed:
 
 1. `calendar/index.html`
-	Main Calendar page (home page of your app).
+	Main Calendar UI (app landing page).
+	Requirement: required.
 
 2. `calendar/users.html`
-	Users page, currently routed as `/calendar/users.html`.
+	Users/participants view.
+	Requirement: optional feature page, but required if navbar links to it.
 
 3. `wrangler.jsonc`
-	Deployment configuration file that tells Cloudflare what to deploy and how.
+	Cloudflare deployment configuration.
+	Requirement: required for `wrangler deploy`.
 
 4. `README.md`
-	Documentation for setup, deployment, and maintenance.
+	Setup and maintenance documentation.
+	Requirement: optional but recommended for contributors.
 
-## 3) `wrangler.jsonc` Explained
+## 3) wrangler.jsonc Breakdown
 
-Your current config:
+Current config:
 
 ```jsonc
 {
@@ -70,35 +81,35 @@ Your current config:
 }
 ```
 
-Meaning and requirement of each field:
+Field-by-field meaning and requirement:
 
 1. `$schema`
-	Enables editor validation/autocomplete for Wrangler config.
-	Requirement: optional but strongly recommended.
+	Enables editor validation and autocomplete for the config.
+	Requirement: optional (recommended).
 
 2. `name`
-	Project/service name used by Cloudflare deployment.
+	The deployed project/service name.
 	Requirement: required.
 
 3. `compatibility_date`
-	Locks runtime behavior to a known Cloudflare Workers API date.
+	Locks Cloudflare runtime behavior to a known date.
 	Requirement: required.
 
 4. `observability.enabled`
-	Enables Cloudflare observability features (logs/insights support).
+	Enables observability features for logs and insights.
 	Requirement: optional.
 
 5. `assets.directory`
-	Tells Wrangler to upload static files from `calendar/`.
-	Requirement: required for static-asset deployment.
+	Defines which directory is uploaded as static assets.
+	Requirement: required in this setup.
 
-6. `compatibility_flags: ["nodejs_compat"]`
-	Enables Node.js compatibility behavior where needed.
-	Requirement: optional (only needed if your runtime code depends on it).
+6. `compatibility_flags`
+	Enables runtime feature flags such as `nodejs_compat`.
+	Requirement: optional, only if your code needs that compatibility.
 
 ## 4) First-Time Setup
 
-From repository root:
+Run from repository root:
 
 ```bash
 cd pages
@@ -107,68 +118,74 @@ npm install -D wrangler
 npx wrangler login
 ```
 
-Why these are needed:
+Why each step matters:
 
 1. `npm init -y`
-	Creates local Node project metadata.
+	Initializes a Node project in `pages`.
 
 2. `npm install -D wrangler`
-	Installs Wrangler locally so everyone uses a consistent version.
+	Installs Wrangler locally for consistent team tooling.
 
 3. `npx wrangler login`
-	Authenticates your machine with your Cloudflare account.
+	Authenticates the local machine with Cloudflare.
 
-## 5) Deploy
+## 5) Local Development
 
-Deploy from the `pages` folder:
-
-```bash
-npx wrangler deploy
-```
-
-After deployment, Cloudflare returns a `workers.dev` URL for your project.
-
-## 6) Routing Notes for This Project
-
-Because static files are served from `calendar/`:
-
-1. `index.html` is the entry page.
-2. `users.html` should be linked with a valid deployed path.
-3. Use root-based links (`/` and `/calendar/users.html`) consistently with your current structure.
-
-## 7) Local Development
-
-Run locally before deployment:
+Start local dev server:
 
 ```bash
+cd pages
 npx wrangler dev
 ```
 
 Requirement:
 
-1. Keep `wrangler.jsonc` and file paths in sync.
-2. If you rename/move HTML files, update navbar links accordingly.
+1. Keep file paths and `assets.directory` aligned.
+2. Update links if files are renamed or moved.
 
-## 8) Common Errors and Fixes
+## 6) Deployment
 
-1. 404 on Users page
-	Cause: old path still used in navbar.
-	Fix: update links to current file location.
+Deploy from `pages`:
 
-2. Auth error during deploy
-	Cause: not logged in or expired login.
+```bash
+npx wrangler deploy
+```
+
+On success, Cloudflare returns a `workers.dev` URL.
+
+## 7) Routing Rules for This Repo
+
+With current file placement:
+
+1. Calendar page route: `/`
+2. Users page route: `/calendar/users.html`
+
+If you move files again, update navbar links in both pages before deploying.
+
+## 8) Common Issues
+
+1. Users page returns 404
+	Cause: old URL in navbar after file move.
+	Fix: update links to current route, then redeploy.
+
+2. Deployment auth failure
+	Cause: missing or expired login session.
 	Fix: run `npx wrangler login` again.
 
-3. Missing files in deployment
-	Cause: wrong `assets.directory`.
-	Fix: ensure it points to the folder that contains your HTML (`calendar`).
+3. Files not showing in production
+	Cause: wrong assets directory.
+	Fix: make sure `assets.directory` points to `calendar`.
 
-## 9) When to Use Cloudflare Pages vs Workers
+## 9) Cloudflare Pages vs This Setup
 
-1. Use this current setup (Wrangler + assets) when:
-	You want a simple static deployment and a `workers.dev` URL.
+Use current setup (Wrangler + assets) when:
 
-2. Use Cloudflare Pages when:
-	You want Git-integrated automatic builds/previews from the Cloudflare Pages dashboard.
+1. You want direct CLI deployment.
+2. You are fine with a `workers.dev` host.
 
-Both are valid. Your current project is already working with the Wrangler static-asset path.
+Use Cloudflare Pages dashboard when:
+
+1. You want Git-connected auto-deploy previews per commit/branch.
+2. You want Pages-managed build settings in the UI.
+
+Both are valid. This repository is currently configured for Wrangler static-asset deployment.
