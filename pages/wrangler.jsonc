@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "opencalendar",
+  "compatibility_date": "2026-04-03",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "calendar"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
